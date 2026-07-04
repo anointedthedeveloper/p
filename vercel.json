@@ -1,8 +1,7 @@
 {
   "version": 2,
   "functions": {
-    "api/download.js": {
-      "maxDuration": 30
-    }
+    "api/subjects.js": { "maxDuration": 30 },
+    "api/file.js": { "maxDuration": 30 }
   }
 }
