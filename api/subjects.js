@@ -4,7 +4,6 @@ const API_KEY = "p4jq";
 const OWNER = "anointedthedeveloper";
 const REPO = "Q2";
 const BRANCH = "main";
-const GITHUB_PASSWORD = "jamb2027";
 
 // Map of known filename → display name
 const KNOWN_NAMES = {
@@ -20,16 +19,13 @@ function toTitleCase(s) {
   return s.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 }
 
-function fetchJson(url, token) {
+function fetchJson(url) {
   return new Promise((resolve, reject) => {
     const opts = new URL(url);
     const reqOpts = {
       hostname: opts.hostname,
       path: opts.pathname + opts.search,
-      headers: {
-        "User-Agent": "CbtProxy",
-        Authorization: `token ${token}`,
-      },
+      headers: { "User-Agent": "CbtProxy" },
     };
     https.get(reqOpts, (res) => {
       let data = "";
@@ -52,7 +48,7 @@ module.exports = async (req, res) => {
   const treeUrl = `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`;
   let tree;
   try {
-    tree = await fetchJson(treeUrl, GITHUB_PASSWORD);
+    tree = await fetchJson(treeUrl);
   } catch (e) {
     return res.status(502).json({ error: "Failed to fetch repo tree", detail: e.message });
   }
