@@ -1,9 +1,10 @@
 const https = require("https");
 
-const API_KEY = "p4jq";
+const API_KEY = process.env.API_KEY || "p4jq";
 const OWNER = "anointedthedeveloper";
 const REPO = "Q2";
 const BRANCH = "main";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "";
 
 function fetchRaw(url) {
   return new Promise((resolve, reject) => {
@@ -15,6 +16,7 @@ function fetchRaw(url) {
         headers: {
           "User-Agent": "CbtProxy",
           Accept: "application/vnd.github.v3.raw",
+          ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
         },
       },
       (res) => {

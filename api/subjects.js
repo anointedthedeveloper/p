@@ -1,9 +1,10 @@
 const https = require("https");
 
-const API_KEY = "p4jq";
+const API_KEY = process.env.API_KEY || "p4jq";
 const OWNER = "anointedthedeveloper";
 const REPO = "Q2";
 const BRANCH = "main";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "";
 
 // Map of known filename → display name
 const KNOWN_NAMES = {
@@ -25,7 +26,10 @@ function fetchJson(url) {
     const reqOpts = {
       hostname: opts.hostname,
       path: opts.pathname + opts.search,
-      headers: { "User-Agent": "CbtProxy" },
+      headers: {
+        "User-Agent": "CbtProxy",
+        ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
+      },
     };
     https.get(reqOpts, (res) => {
       let data = "";
