@@ -1,4 +1,5 @@
 const https = require("https");
+const zlib  = require("zlib");
 
 const API_KEY = process.env.API_KEY || "p4jq";
 const OWNER = "anointedthedeveloper";
@@ -15,7 +16,8 @@ function fetchRaw(url) {
         path: opts.pathname + opts.search,
         headers: {
           "User-Agent": "CbtProxy",
-          Accept: "application/vnd.github.v3.raw",
+          "Accept": "application/vnd.github.v3.raw",
+          "Accept-Encoding": "gzip, deflate",
           ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
         },
       },
@@ -23,12 +25,19 @@ function fetchRaw(url) {
         if (res.statusCode === 301 || res.statusCode === 302) {
           return fetchRaw(res.headers.location).then(resolve).catch(reject);
         }
-        let data = "";
-        res.on("data", (c) => (data += c));
-        res.on("end", () => {
+
+        const enc = (res.headers["content-encoding"] || "").toLowerCase();
+        let stream = res;
+        if (enc === "gzip")    stream = res.pipe(zlib.createGunzip());
+        else if (enc === "deflate") stream = res.pipe(zlib.createInflate());
+
+        const chunks = [];
+        stream.on("data", (c) => chunks.push(c));
+        stream.on("end", () => {
           if (res.statusCode >= 400) return reject(new Error(`HTTP ${res.statusCode}`));
-          resolve(data);
+          resolve(Buffer.concat(chunks).toString("utf8"));
         });
+        stream.on("error", reject);
       }
     ).on("error", reject);
   });
@@ -48,8 +57,9 @@ module.exports = async (req, res) => {
 
   try {
     const raw = await fetchRaw(url);
-    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
     res.setHeader("Access-Control-Allow-Origin", "*");
+    // Let Vercel edge handle response compression to the client
     res.status(200).send(raw);
   } catch (e) {
     res.status(502).json({ error: "Failed to fetch file", detail: e.message });
